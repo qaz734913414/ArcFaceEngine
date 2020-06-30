@@ -54,5 +54,8 @@ dependencies {
         apiDep(Deps.AndroidX.core_ktx)
         apiDep(Deps.Kotlin.stdlib)
         apiDep(Deps.J3Code.core)
+        implementationDep(Deps.Google.guava)
     }
+    // 人脸引擎需要使用的commons-pool2线程池
+    implementation("org.apache.commons:commons-pool2:2.8.0")
 }
