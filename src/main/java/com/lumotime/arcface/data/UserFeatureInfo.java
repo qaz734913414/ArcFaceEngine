@@ -2,6 +2,7 @@ package com.lumotime.arcface.data;
 
 import androidx.annotation.Nullable;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -16,7 +17,9 @@ import java.util.Arrays;
  * @author <a href="mail to: cnrivkaer@outlook.com" rel="nofollow">lumo</a>
  * @version v1.0
  */
-public class UserFeatureInfo implements Cloneable{
+public class UserFeatureInfo implements Cloneable, Serializable {
+
+    private static final long serialVersionUID = 6161510305651808368L;
 
     private String userId;
     private String username;

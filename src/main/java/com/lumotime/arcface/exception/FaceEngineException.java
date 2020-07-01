@@ -12,7 +12,7 @@ package com.lumotime.arcface.exception;
  * @author <a href="mail to: cnrivkaer@outlook.com" rel="nofollow">lumo</a>
  * @version v1.0
  */
-public class FaceEngineException extends RuntimeException {
+public class FaceEngineException extends FaceHandleException {
 
     public FaceEngineException(String message) {
         super(message);

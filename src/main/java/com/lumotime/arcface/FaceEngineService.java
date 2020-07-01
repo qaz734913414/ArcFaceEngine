@@ -77,10 +77,10 @@ public class FaceEngineService {
         // 人脸检测引擎核心数目
         int detectEngineCount = Math.round(engineCount / 4.0F * 1.0F);
         // 人脸特征提取引擎核心数目
-        int compareEngineCount = Math.round(engineCount / 4.0F * 3.0F);
+        int generalEngineCount = Math.round(engineCount / 4.0F * 3.0F);
 
         Logger.i("engineCount: " + engineCount + "; detectEngineCount: " + detectEngineCount
-                + "; compareEngineCount: " + compareEngineCount);
+                + "; compareEngineCount: " + generalEngineCount);
         // 摄像头人脸检测引擎
         GenericObjectPoolConfig detectPoolConfig = new GenericObjectPoolConfig();
         detectPoolConfig.setMaxIdle(detectEngineCount);
@@ -113,33 +113,33 @@ public class FaceEngineService {
                 Config.APP_ID, Config.APP_KEY, detectCfg), detectPoolConfig);
 
         // 通用人脸引擎
-        GenericObjectPoolConfig comparePoolConfig = new GenericObjectPoolConfig();
-        comparePoolConfig.setMaxIdle(detectEngineCount);
-        comparePoolConfig.setMaxTotal(detectEngineCount);
-        comparePoolConfig.setMinIdle(detectEngineCount);
-        comparePoolConfig.setLifo(false);
-        comparePoolConfig.setJmxEnabled(false);
-        EngineConfiguration compareCfg = new EngineConfiguration();
-        FunctionConfiguration compareFunctionCfg = new FunctionConfiguration();
+        GenericObjectPoolConfig generalPoolConfig = new GenericObjectPoolConfig();
+        generalPoolConfig.setMaxIdle(generalEngineCount);
+        generalPoolConfig.setMaxTotal(generalEngineCount);
+        generalPoolConfig.setMinIdle(generalEngineCount);
+        generalPoolConfig.setLifo(false);
+        generalPoolConfig.setJmxEnabled(false);
+        EngineConfiguration generalCfg = new EngineConfiguration();
+        FunctionConfiguration generalFunctionCfg = new FunctionConfiguration();
         //开启人脸检测功能
-        compareFunctionCfg.setSupportFaceDetect(true);
+        generalFunctionCfg.setSupportFaceDetect(true);
         //开启人脸识别功能
-        compareFunctionCfg.setSupportFaceRecognition(true);
+        generalFunctionCfg.setSupportFaceRecognition(true);
         //开启年龄检测功能
-        compareFunctionCfg.setSupportAge(true);
+        generalFunctionCfg.setSupportAge(true);
         //开启性别检测功能
-        compareFunctionCfg.setSupportGender(true);
+        generalFunctionCfg.setSupportGender(true);
         //未开启活体检测功能(免费版引擎一年期的活体使用权限, 需要关闭活体检测后可以正常使用)
-        compareCfg.setFunctionConfiguration(compareFunctionCfg);
+        generalCfg.setFunctionConfiguration(generalFunctionCfg);
         //图片检测模式，如果是连续帧的视频流图片，那么改成VIDEO模式
-        compareCfg.setDetectMode(DetectMode.ASF_DETECT_MODE_IMAGE);
-        //人脸旋转角度
-        compareCfg.setDetectFaceOrientPriority(DetectFaceOrientPriority.ASF_OP_0_ONLY);
+        generalCfg.setDetectMode(DetectMode.ASF_DETECT_MODE_IMAGE);
+        //人脸旋转角度 通用引擎检测全部的角度
+        generalCfg.setDetectFaceOrientPriority(DetectFaceOrientPriority.ASF_OP_ALL_OUT);
         //底层库算法对象池
         //noinspection unchecked
         faceEngineGeneralPool = new GenericObjectPool(new FaceEngineFactory(
                 Utils.getApp().getApplicationContext(),
-                Config.APP_ID, Config.APP_KEY, detectCfg), detectPoolConfig);
+                Config.APP_ID, Config.APP_KEY, detectCfg), generalPoolConfig);
         return this;
     }
 

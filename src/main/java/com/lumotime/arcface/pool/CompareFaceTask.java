@@ -29,8 +29,17 @@ import java.util.concurrent.Callable;
  */
 public class CompareFaceTask implements Callable<List<FaceRecognition.UserCompareInfo>> {
 
+    /**
+     * 人脸库特征数据列表
+     */
     private List<UserFeatureInfo> userFeatureInfoList;
+    /**
+     * 1: N 待查找的人脸
+     */
     private FaceFeature targetFaceFeature;
+    /**
+     * 人脸阈值
+     */
     private float passRate;
 
     public CompareFaceTask(List<UserFeatureInfo> userFeatureInfoList, FaceFeature targetFaceFeature, float passRate) {
