@@ -58,6 +58,10 @@ public class UserFeatureInfo implements Cloneable, Serializable {
         this.feature = feature;
     }
 
+    public UserFeatureInfo getUserFaceInfo() {
+        return this;
+    }
+
     @Nullable
     @Override
     public UserFeatureInfo clone() {

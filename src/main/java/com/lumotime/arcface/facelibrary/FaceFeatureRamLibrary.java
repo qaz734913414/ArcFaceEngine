@@ -176,7 +176,7 @@ public class FaceFeatureRamLibrary {
      * @param warehouse userFaceAccessInfoOfMap 存放的文件
      * @throws IOException 序列化、持久化过程中遇到的异常
      */
-    private void persistentLocalFacialFeatureWarehouse(@NonNull File warehouse) throws IOException {
+    public void persistentLocalFacialFeatureWarehouse(@NonNull File warehouse) throws IOException {
         // 判断文件文件是否存在, 请优先创建文件
         if (!FileUtils.isFileExists(warehouse)){
             boolean created = warehouse.createNewFile();

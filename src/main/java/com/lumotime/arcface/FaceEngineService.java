@@ -15,6 +15,7 @@ import com.arcsoft.face.FaceInfo;
 import com.arcsoft.face.FaceSimilar;
 import com.arcsoft.face.enums.DetectFaceOrientPriority;
 import com.arcsoft.face.enums.DetectMode;
+import com.google.common.collect.Iterables;
 import com.lumotime.arcface.config.Config;
 import com.lumotime.arcface.config.EngineConfiguration;
 import com.lumotime.arcface.config.FunctionConfiguration;
@@ -167,7 +168,20 @@ public class FaceEngineService {
      * @return 检测到预览的数据中的人脸信息列表
      */
     @Nullable
-    public List<FaceInfo> previewDetectFaceInfo(@NonNull byte[] nv21Image, int width, int height)
+    public FaceInfo previewDetectFaceInfo(@NonNull byte[] nv21Image, int width, int height)
+            throws Exception{
+        return Iterables.getFirst(previewDetectFaceInfoList(nv21Image, width, height), null);
+    }
+
+    /**
+     * 检测预览的图像数据中人脸信息列表
+     * @param nv21Image 预览数据(nv21)
+     * @param width 预览数据宽度
+     * @param height 预览数据高度
+     * @return 检测到预览的数据中的人脸信息列表
+     */
+    @Nullable
+    public List<FaceInfo> previewDetectFaceInfoList(@NonNull byte[] nv21Image, int width, int height)
             throws Exception{
         RukFaceEngine faceEngine = null;
         try {
@@ -378,7 +392,21 @@ public class FaceEngineService {
      * @throws Exception 处理中遇到的异常
      */
     @Nullable
-    public FaceFeatureInfo extractFaceFeature(@NonNull Bitmap bitmap) throws Exception {
+    public FaceFeature extractFaceFeature(@NonNull Bitmap bitmap) throws Exception {
+        FaceFeatureInfo faceFeatureInfo = extractFaceFeatureInfo(bitmap);
+        FaceFeature faceFeature = new FaceFeature();
+        faceFeature.setFeatureData(faceFeatureInfo.getFeatureData());
+        return faceFeature;
+    }
+
+    /**
+     * 提取传入的图片数据中的最接近的一张人脸特征
+     * @param bitmap 传入的图片数据
+     * @return 人脸特征信息
+     * @throws Exception 处理中遇到的异常
+     */
+    @Nullable
+    public FaceFeatureInfo extractFaceFeatureInfo(@NonNull Bitmap bitmap) throws Exception {
         RukFaceEngine faceEngine = null;
         try {
             faceEngine = faceEngineGeneralPool.borrowObject();
@@ -412,7 +440,23 @@ public class FaceEngineService {
      * @throws Exception 处理中遇到的异常
      */
     @Nullable
-    public FaceFeatureInfo extractFaceFeature(@NonNull byte[] nv21, int width, int height) throws Exception {
+    public FaceFeature extractFaceFeature(@NonNull byte[] nv21, int width, int height) throws Exception {
+        FaceFeatureInfo faceFeatureInfo = extractFaceFeatureInfo(nv21, width, height);
+        FaceFeature faceFeature = new FaceFeature();
+        faceFeature.setFeatureData(faceFeatureInfo.getFeatureData());
+        return faceFeature;
+    }
+
+    /**
+     * 提取传入的图片数据中的最接近的一张人脸特征
+     * @param nv21 传入的图片数据
+     * @param width 图片数据宽度
+     * @param height 图片数据高度
+     * @return 人脸特征信息
+     * @throws Exception 处理中遇到的异常
+     */
+    @Nullable
+    public FaceFeatureInfo extractFaceFeatureInfo(@NonNull byte[] nv21, int width, int height) throws Exception {
         RukFaceEngine faceEngine = null;
         try {
             faceEngine = faceEngineGeneralPool.borrowObject();
@@ -445,7 +489,7 @@ public class FaceEngineService {
      * @throws Exception 处理中遇到的异常
      */
     @Nullable
-    public FaceFeatureInfo extractFaceFeature(@NonNull Bitmap bitmap, @NonNull FaceInfo faceInfo) throws Exception {
+    public FaceFeatureInfo extractFaceFeatureInfo(@NonNull Bitmap bitmap, @NonNull FaceInfo faceInfo) throws Exception {
         RukFaceEngine faceEngine = null;
         try {
             faceEngine = faceEngineGeneralPool.borrowObject();
@@ -475,7 +519,7 @@ public class FaceEngineService {
      * @throws Exception 处理中遇到的异常
      */
     @Nullable
-    public FaceFeatureInfo extractFaceFeature(@NonNull byte[] nv21, int width, int height,
+    public FaceFeatureInfo extractFaceFeatureInfo(@NonNull byte[] nv21, int width, int height,
                                               @NonNull FaceInfo faceInfo) throws Exception {
         RukFaceEngine faceEngine = null;
         try {
@@ -494,6 +538,17 @@ public class FaceEngineService {
                 faceEngineGeneralPool.returnObject(faceEngine);
             }
         }
+    }
+
+    /**
+     * 人脸特征信息转化人脸特征
+     * @param featureInfo 人脸特征信息
+     * @return 人脸特征
+     */
+    public FaceFeature convertFeature(@NonNull FaceFeatureInfo featureInfo){
+        FaceFeature faceFeature = new FaceFeature();
+        faceFeature.setFeatureData(featureInfo.getFeatureData());
+        return faceFeature;
     }
 
     /**

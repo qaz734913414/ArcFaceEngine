@@ -4,18 +4,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.arcsoft.face.FaceFeature;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lumotime.arcface.cache.FaceFeatureCache;
 import com.lumotime.arcface.cache.FaceFeatureCacheConfig;
 import com.lumotime.arcface.data.UserFeatureInfo;
 import com.lumotime.arcface.pool.CompareFaceTask;
 import com.orhanobut.logger.Logger;
 
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletionService;
@@ -53,11 +57,12 @@ public class FaceRecognition {
 
     /**
      * 查找最接近的用户特征信息从LibraryLibrary中
+     *
      * @param faceFeature 用户特征信息
      * @return 人脸比对最接近的结果 可能为空值
      */
     public UserCompareInfo findClosestUserFeatureInfoInFeatureLibrary(
-            FaceFeature faceFeature){
+            FaceFeature faceFeature) {
         return Iterables.getFirst(
                 findClosestUserFeatureInfoListInFeatureLibrary(faceFeature),
                 null
@@ -66,39 +71,60 @@ public class FaceRecognition {
 
     /**
      * 查找最接近的用户特征信息从LibraryLibrary中
+     *
      * @param faceFeature 用户特征信息
      * @return 人脸比对最接近的结果 可能为空值
      */
     public LinkedList<UserCompareInfo> findClosestUserFeatureInfoListInFeatureLibrary(
-            FaceFeature faceFeature){
+            FaceFeature faceFeature) {
         return findClosestUserFeatureInfoListInFeatureLibrary(faceFeature, DEFAULT_FACE_PASS_RATE,
                 FaceFeatureCache.DEFAULT_FACE_FEATURE_RAM_LIBRARY_CACHE_INIT_SIZE);
     }
 
     /**
      * 查找最接近的用户特征信息从LibraryLibrary中
+     *
      * @param faceFeature 用户特征信息
-     * @param passRate 人脸比对阈值
-     * @param groupSize 单线程任务大小
+     * @param passRate    人脸比对阈值
+     * @param groupSize   单线程任务大小
      * @return 人脸比对最接近的结果 可能为空值
      */
     public LinkedList<UserCompareInfo> findClosestUserFeatureInfoListInFeatureLibrary(
-            FaceFeature faceFeature, float passRate, int groupSize){
+            FaceFeature faceFeature, float passRate, int groupSize) {
         LinkedList<UserCompareInfo> userCompareInfoList = Lists.newLinkedList();
-        if (faceFeatureCache.getCacheConfig().isCacheUse()){
-            LinkedList<UserFeatureInfo> values = faceFeatureCache.getAllCache();
-            LinkedList<UserCompareInfo> closestCacheFeature = findClosestUserFeatureInfoList(
-                    faceFeature,
-                    Lists.newArrayList(values),
-                    passRate,
-                    // 将缓存中的数据充分的均分到每个线程上
-                    faceFeatureCache.getCount() / SystemUtils.getCpuCount()
-            );
-            float cachePassRate = faceFeatureCache.getCacheConfig().getPassRate();
-            for (UserCompareInfo userCompareInfo : closestCacheFeature) {
-                if (userCompareInfo.getSimilar() >= cachePassRate){
-                    return closestCacheFeature;
-                }
+        if (faceFeatureCache.isAvailable()) {
+            LinkedList<UserCompareInfo> closestCacheFeature
+                    = findFeatureInFaceFeatureCache(faceFeature, passRate);
+            // 缓存中比中的结果应大于人脸阈值 + 偏移量，如果合值大于1时 将使用 阀值 + 1/5人脸阀值
+            float cachePassRate =
+                    faceFeatureCache.getCacheConfig().getPassRateOffset();
+
+            Collection<UserCompareInfo> passRateCacheUserCompareInfo = Collections2
+                    .filter(closestCacheFeature, new Predicate<UserCompareInfo>() {
+                        @Override
+                        public boolean apply(@NullableDecl UserCompareInfo input) {
+                            if (input == null) {
+                                return false;
+                            }
+                            return input.getSimilar() >= (cachePassRate > 1 ?
+                                    (passRate + cachePassRate / 5) : cachePassRate + passRate);
+                        }
+                    });
+            if (passRateCacheUserCompareInfo.size() > 1) {
+                Collection<UserFeatureInfo> transformUserFeatureInfoList = Collections2
+                        .transform(passRateCacheUserCompareInfo, new Function<UserCompareInfo, UserFeatureInfo>() {
+                            @NullableDecl
+                            @Override
+                            public UserFeatureInfo apply(@NullableDecl UserCompareInfo input) {
+                                if (input == null){
+                                    return new UserCompareInfo();
+                                }
+                                return input.getUserFaceInfo();
+                            }
+                        });
+                faceFeatureCache.removeCache(transformUserFeatureInfoList);
+            } else {
+                return closestCacheFeature;
             }
             // 将不符合缓存器标准的数据添加到结果数据中
             userCompareInfoList.addAll(closestCacheFeature);
@@ -112,12 +138,43 @@ public class FaceRecognition {
         // 将缓存中和内存库中的数据结合
         closestUserFeatureInfoList.addAll(userCompareInfoList);
         // 按照相似度倒序排列
-        return orderReverse(closestUserFeatureInfoList);
+        LinkedList<UserCompareInfo> allUserCompareInfoList = orderReverse(closestUserFeatureInfoList);
+        UserCompareInfo userCompareInfo;
+        if (faceFeatureCache.getCacheConfig().isCacheUse()
+                && (userCompareInfo = Iterables.getFirst(allUserCompareInfoList, null)) != null
+                && userCompareInfo.getSimilar() >= passRate) {
+            UserFeatureInfo userFaceInfo = userCompareInfo.getUserFaceInfo();
+            // 将当前的人脸特征更新到人脸特征缓存区
+            userFaceInfo.setFeature(faceFeature.getFeatureData());
+            faceFeatureCache.addCache(userFaceInfo);
+        }
+        return allUserCompareInfoList;
+    }
+
+    /**
+     * 从缓存中查找人脸特征列表
+     * @param faceFeature 人脸特征
+     * @param passRate 通过合格率
+     * @return 符合的人脸特征列表
+     */
+    private LinkedList<UserCompareInfo> findFeatureInFaceFeatureCache(
+            @NonNull FaceFeature faceFeature, float passRate){
+        LinkedList<UserFeatureInfo> values = faceFeatureCache.getAllCache();
+        float cacheGroupSize = Math.round(faceFeatureCache.getCount() % 10);
+        LinkedList<UserCompareInfo> closestCacheFeature = findClosestUserFeatureInfoList(
+                faceFeature,
+                values,
+                passRate,
+                // 将缓存中的数据充分的均分到每个线程上
+                Math.round(cacheGroupSize)
+        );
+        return closestCacheFeature;
     }
 
     /**
      * 人脸库 人脸快速识别
-     * @param faceFeature 人脸特征
+     *
+     * @param faceFeature  人脸特征
      * @param userCompares 人脸特征库列表
      * @return 人脸比对最接近的结果 可能为空值
      */
@@ -134,10 +191,11 @@ public class FaceRecognition {
 
     /**
      * 人脸库 人脸快速识别
-     * @param faceFeature 人脸特征
+     *
+     * @param faceFeature  人脸特征
      * @param userCompares 人脸特征库列表
-     * @param passRate 结果阈值
-     * @param groupSize 单线程任务大小
+     * @param passRate     结果阈值
+     * @param groupSize    单线程任务大小
      * @return 人脸比对最接近的结果 可能为空值
      */
     @Nullable
@@ -154,7 +212,8 @@ public class FaceRecognition {
 
     /**
      * 人脸库 人脸快速识别
-     * @param faceFeature 人脸特征
+     *
+     * @param faceFeature  人脸特征
      * @param userCompares 人脸特征库列表
      * @return 人脸比对最接近的结果列表
      */
@@ -168,10 +227,11 @@ public class FaceRecognition {
 
     /**
      * 人脸库 人脸快速识别
-     * @param faceFeature 人脸特征
+     *
+     * @param faceFeature  人脸特征
      * @param userCompares 人脸特征库列表
-     * @param passRate 结果阈值
-     * @param groupSize 单线程任务大小
+     * @param passRate     结果阈值
+     * @param groupSize    单线程任务大小
      * @return 人脸比对最接近的结果列表
      */
     public LinkedList<UserCompareInfo> findClosestUserFeatureInfoList(
@@ -194,7 +254,7 @@ public class FaceRecognition {
                 faceUserInfoList = completionService.take().get();
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.e(ex, "merge face recognition result failure");
-            }finally {
+            } finally {
                 if (faceUserInfoList != null && !faceUserInfoList.isEmpty()) {
                     resultUserInfoList.addAll(faceUserInfoList);
                 }
@@ -213,6 +273,7 @@ public class FaceRecognition {
 
     /**
      * 获取人脸特征缓存器
+     *
      * @return 人脸特征缓存器
      */
     public FaceFeatureCache getFaceFeatureCache() {
@@ -258,21 +319,22 @@ public class FaceRecognition {
 
     /**
      * 比对的相似度 由大到小 排列
+     *
      * @param compareInfoLinkedList 原始数据
      * @return 排列后的数据
      */
     private static LinkedList<UserCompareInfo> orderReverse(
-            @NonNull LinkedList<UserCompareInfo> compareInfoLinkedList){
+            @NonNull LinkedList<UserCompareInfo> compareInfoLinkedList) {
         // 对重组后的结果进行重新排序
         Collections.sort(compareInfoLinkedList, new Comparator<UserCompareInfo>() {
             @Override
             public int compare(UserCompareInfo left, UserCompareInfo right) {
                 Float leftSimilar = 0F;
-                if (left != null && left.getSimilar() != null){
+                if (left != null && left.getSimilar() != null) {
                     leftSimilar = left.getSimilar();
                 }
                 Float rightSimilar = 0F;
-                if (right != null && right.getSimilar() != null){
+                if (right != null && right.getSimilar() != null) {
                     rightSimilar = right.getSimilar();
                 }
                 return rightSimilar.compareTo(leftSimilar);

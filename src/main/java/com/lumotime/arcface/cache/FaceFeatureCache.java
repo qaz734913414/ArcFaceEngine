@@ -8,6 +8,7 @@ import com.google.common.collect.Maps;
 import com.lumotime.arcface.data.UserFeatureInfo;
 import com.lumotime.arcface.facelibrary.FaceFeatureRamLibrary;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -54,6 +55,44 @@ public class FaceFeatureCache {
      * 向缓存器中添加一个特征
      * @param userFeatureInfo 特征信息
      */
+    public synchronized void removeCache(@NonNull Collection<UserFeatureInfo> userFeatureInfo){
+        if (cacheConfig.isCacheUse()){
+            for (UserFeatureInfo featureInfo : userFeatureInfo) {
+                if (featureInfo != null){
+                    mSystemRecognitionHistory.remove(featureInfo.getUserId());
+                }
+            }
+        }
+    }
+
+    /**
+     * 向缓存器中添加一个特征
+     * @param userFeatureInfo 特征信息
+     */
+    public synchronized void removeCache(@NonNull UserFeatureInfo... userFeatureInfo){
+        if (cacheConfig.isCacheUse()){
+            for (UserFeatureInfo featureInfo : userFeatureInfo) {
+                if (featureInfo != null){
+                    mSystemRecognitionHistory.remove(featureInfo.getUserId());
+                }
+            }
+        }
+    }
+
+    /**
+     * 向缓存器中添加一个特征
+     * @param userFeatureInfo 特征信息
+     */
+    public synchronized void removeCache(@NonNull UserFeatureInfo userFeatureInfo){
+        if (cacheConfig.isCacheUse()){
+            mSystemRecognitionHistory.remove(userFeatureInfo.getUserId());
+        }
+    }
+
+    /**
+     * 向缓存器中添加一个特征
+     * @param userFeatureInfo 特征信息
+     */
     public synchronized void addCache(@NonNull UserFeatureInfo userFeatureInfo){
         checkContainerFullAndClearFullOldCacheElement();
         if (cacheConfig.isCacheUse()){
@@ -92,6 +131,14 @@ public class FaceFeatureCache {
      */
     public synchronized void clear(){
         mSystemRecognitionHistory.clear();
+    }
+
+    /**
+     * 查询缓存器是否可用
+     * @return {@code true : 缓存器可用, other: 缓存器不可用}
+     */
+    public synchronized boolean isAvailable(){
+        return (! mSystemRecognitionHistory.isEmpty()) && cacheConfig.isCacheUse();
     }
 
     public FaceFeatureCacheConfig getCacheConfig() {
