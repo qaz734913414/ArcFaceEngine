@@ -2,6 +2,7 @@ package com.lumotime.arcface.engine;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,6 +40,7 @@ import java.util.List;
  * @version v1.0
  */
 public class RukFaceEngine extends FaceEngine {
+    private final String TAG = this.getClass().getSimpleName();
 
     /**
      * 对齐图像的时候需要进行裁剪
@@ -244,7 +246,7 @@ public class RukFaceEngine extends FaceEngine {
         if (errorCode == ErrorInfo.MOK) {
             return faceFeature;
         } else {
-            Logger.e("extractFaceFeature failure, errorCode: " + errorCode);
+            Log.e(TAG, "extractFaceFeature failure, errorCode: " + errorCode);
         }
         return null;
     }
@@ -277,7 +279,7 @@ public class RukFaceEngine extends FaceEngine {
         if (errorCode == ErrorInfo.MOK) {
             return faceFeature;
         } else {
-            Logger.e("extractFaceFeature failure, errorCode: " + errorCode);
+            Log.e(TAG, "extractFaceFeature failure, errorCode: " + errorCode);
         }
         return null;
     }
