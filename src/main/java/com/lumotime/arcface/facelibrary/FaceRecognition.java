@@ -11,6 +11,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.lumotime.arcface.cache.FaceFeatureCache;
 import com.lumotime.arcface.cache.FaceFeatureCacheConfig;
+import com.lumotime.arcface.data.UserCompareInfo;
 import com.lumotime.arcface.data.UserFeatureInfo;
 import com.lumotime.arcface.pool.CompareFaceTask;
 import com.orhanobut.logger.Logger;
@@ -278,43 +279,6 @@ public class FaceRecognition {
      */
     public FaceFeatureCache getFaceFeatureCache() {
         return faceFeatureCache;
-    }
-
-    /**
-     * 人脸比中信息结果
-     */
-    public static class UserCompareInfo extends UserFeatureInfo {
-        /**
-         * 人脸特征相似度
-         */
-        private Float similar;
-
-        public UserCompareInfo() {
-        }
-
-        public UserCompareInfo(UserFeatureInfo userFeatureInfo, Float similar) {
-            this.similar = similar;
-            setUserId(userFeatureInfo.getUserId());
-            setUsername(userFeatureInfo.getUsername());
-            setGender(userFeatureInfo.getGender());
-            setFeature(userFeatureInfo.getFeature());
-        }
-
-        public Float getSimilar() {
-            return similar;
-        }
-
-        public void setSimilar(Float similar) {
-            this.similar = similar;
-        }
-
-        @Override
-        public String toString() {
-            return "UserCompareInfo{" +
-                    "similar=" + similar +
-                    "super=" + super.toString() +
-                    '}';
-        }
     }
 
     /**

@@ -3,6 +3,7 @@ package com.lumotime.arcface.pool;
 import com.arcsoft.face.FaceFeature;
 import com.google.common.collect.Lists;
 import com.lumotime.arcface.FaceEngineService;
+import com.lumotime.arcface.data.UserCompareInfo;
 import com.lumotime.arcface.data.UserFeatureInfo;
 import com.lumotime.arcface.engine.RukFaceEngine;
 import com.lumotime.arcface.exception.FaceEngineException;
@@ -27,7 +28,7 @@ import java.util.concurrent.Callable;
  * @author <a href="mail to: cnrivkaer@outlook.com" rel="nofollow">lumo</a>
  * @version v1.0
  */
-public class CompareFaceTask implements Callable<List<FaceRecognition.UserCompareInfo>> {
+public class CompareFaceTask implements Callable<List<UserCompareInfo>> {
 
     /**
      * 人脸库特征数据列表
@@ -49,12 +50,12 @@ public class CompareFaceTask implements Callable<List<FaceRecognition.UserCompar
     }
 
     @Override
-    public List<FaceRecognition.UserCompareInfo> call() throws Exception {
+    public List<UserCompareInfo> call() throws Exception {
         RukFaceEngine faceEngine = null;
         GenericObjectPool<RukFaceEngine> faceEngineGeneralPool = FaceEngineService.getInstance()
                 .getFaceEngineGeneralPool();
         //识别到的人脸列表
-        List<FaceRecognition.UserCompareInfo> resultUserInfoList = Lists.newLinkedList();
+        List<UserCompareInfo> resultUserInfoList = Lists.newLinkedList();
         try {
             if (faceEngineGeneralPool == null){
                 throw new FaceEngineException("fetch face engine pool failure");
@@ -75,8 +76,8 @@ public class CompareFaceTask implements Callable<List<FaceRecognition.UserCompar
                 faceFeature.setFeatureData(userFeatureInfo.getFeature());
                 Float faceSimilar = faceEngine.compareFace(faceFeature, targetFaceFeature);
                 if (faceSimilar != null && faceSimilar > passRate){
-                    FaceRecognition.UserCompareInfo userCompareInfo
-                            = new FaceRecognition.UserCompareInfo(userFeatureInfo, faceSimilar);
+                    UserCompareInfo userCompareInfo
+                            = new UserCompareInfo(userFeatureInfo, faceSimilar);
                     // 将比对的结果添加到结果列表中
                     resultUserInfoList.add(userCompareInfo);
                 }
