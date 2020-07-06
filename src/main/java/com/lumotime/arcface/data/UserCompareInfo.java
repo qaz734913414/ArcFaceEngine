@@ -4,6 +4,8 @@ package com.lumotime.arcface.data;
  * 人脸比中信息结果
  */
 public class UserCompareInfo extends UserFeatureInfo {
+
+    private String realAvatar;
     /**
      * 人脸特征相似度
      */
@@ -18,6 +20,14 @@ public class UserCompareInfo extends UserFeatureInfo {
         setUsername(userFeatureInfo.getUsername());
         setGender(userFeatureInfo.getGender());
         setFeature(userFeatureInfo.getFeature());
+    }
+
+    public String getRealAvatar() {
+        return realAvatar;
+    }
+
+    public void setRealAvatar(String realAvatar) {
+        this.realAvatar = realAvatar;
     }
 
     public Float getSimilar() {

@@ -110,6 +110,15 @@ public class FaceFeatureRamLibrary {
     }
 
     /**
+     * 移除用户访问控制信息
+     *
+     * @return 用户访问控制信息
+     */
+    public UserFeatureInfo remove(String id){
+        return userFaceAccessInfoOfMap.remove(id);
+    }
+
+    /**
      * 清空用户人脸访问控制信息
      */
     public void clear() {
