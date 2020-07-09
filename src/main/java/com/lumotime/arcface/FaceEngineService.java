@@ -347,6 +347,17 @@ public class FaceEngineService {
      * @return 检测到的人脸列表
      */
     @Nullable
+    public FaceInfo detectFirstFace(@NonNull Bitmap bitmap) throws Exception{
+        return Iterables.getFirst(detectFaces(bitmap), null);
+    }
+
+    /**
+     * 从Bitmap位图画面数据中检测出的人脸列表
+     *
+     * @param bitmap 画面位图
+     * @return 检测到的人脸列表
+     */
+    @Nullable
     public List<FaceInfo> detectFaces(@NonNull Bitmap bitmap) throws Exception{
         RukFaceEngine faceEngine = null;
         try {
@@ -360,6 +371,19 @@ public class FaceEngineService {
                 faceEngineGeneralPool.returnObject(faceEngine);
             }
         }
+    }
+
+    /**
+     * 从NV21画面数据中检测出的人脸列表
+     *
+     * @param nv21Image nv21数据
+     * @param width     nv21的视频宽度
+     * @param height    nv21的视频高度
+     * @return 检测到的人脸列表
+     */
+    @Nullable
+    public FaceInfo detectFirstFace(@NonNull byte[] nv21Image, int width, int height) throws Exception {
+        return Iterables.getFirst(detectFaces(nv21Image, width, height), null);
     }
 
     /**
