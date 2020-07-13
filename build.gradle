@@ -1,0 +1,45 @@
+
+import com.lumotime.BuildConfig
+import com.lumotime.ConfigExtend
+
+apply {
+    from "${project.rootDir.path}/buildLibrary.gradle"
+}
+
+android {
+    defaultConfig {
+        versionCode 1
+        versionName "1.0.0"
+
+        //配置'jniLibs'路径指向libs
+        sourceSets["main"].jniLibs.srcDir("libs")
+    }
+}
+
+def Dependencies = BuildConfig.DEPENDENCIES
+
+dependencies {
+    api project(':ruk:base')
+    // 人脸引擎需要使用的commons-pool2线程池
+    implementation 'org.apache.commons:commons-pool2:2.8.0'
+    implementation "cn.novakj.j3:core:+"
+}
+
+def projectPath = "${project.projectDir}"
+def libsPath = new File(projectPath, "libs").getAbsolutePath()
+
+/// # 下载ArcFace 3.0依赖库
+def arcSoftFaceJar = new File(libsPath, "arcsoft_face.jar").getAbsolutePath()
+def arcSoftFaceImageUtilJar = new File(libsPath, "arcsoft_image_util.jar").getAbsolutePath()
+def libArcSoftFace = new File(libsPath, "armeabi-v7a/libarcsoft_face.so").getAbsolutePath()
+def libArcSoftFaceEngine = new File(libsPath, "armeabi-v7a/libarcsoft_face_engine.so").getAbsolutePath()
+def libArcSoftImageUtil = new File(libsPath, "armeabi-v7a/libarcsoft_image_util.so").getAbsolutePath()
+//创建v7a so仓库
+def armeabiV7a = new File(libsPath, "armeabi-v7a")
+armeabiV7a.mkdirs()
+
+ConfigExtend.checkOrDownloadFile(arcSoftFaceJar, "http://note.novakj.cn/libs/arcface/arcsoft_face.jar")
+ConfigExtend.checkOrDownloadFile(libArcSoftFace, "http://note.novakj.cn/libs/arcface/armeabi-v7a/libarcsoft_face.so")
+ConfigExtend.checkOrDownloadFile(libArcSoftFaceEngine, "http://note.novakj.cn/libs/arcface/armeabi-v7a/libarcsoft_face_engine.so")
+ConfigExtend.checkOrDownloadFile(arcSoftFaceImageUtilJar, "http://note.novakj.cn/libs/arcfaceImageutil/arcsoft_image_util.jar")
+ConfigExtend.checkOrDownloadFile(libArcSoftImageUtil, "http://note.novakj.cn/libs/arcfaceImageutil/armeabi-v7a/libarcsoft_image_util.so")
